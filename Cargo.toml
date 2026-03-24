@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/revm-sim",
+    "crates/invariant-rules",
+    "crates/invariant-fuzzer",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/FibonacciFlux/revm-security-kit"
+
+[workspace.dependencies]
+alloy-primitives = { version = "0.8", features = ["serde"] }
+revm = { version = "14.0", features = ["std", "serde"] }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+tokio = { version = "1.49", features = ["full"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+hex = "0.4"
+thiserror = "2.0"

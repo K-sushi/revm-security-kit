@@ -1,0 +1,17 @@
+[package]
+name = "invariant-rules"
+description = "Protocol-agnostic invariant rule DSL for REVM-driven security audits"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+alloy-primitives = { workspace = true }
+revm = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+hex = "0.4"
+
+[dev-dependencies]

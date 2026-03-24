@@ -1,0 +1,22 @@
+[package]
+name = "revm-sim"
+description = "REVM-based transaction simulator for security research — replay, inspect, verify"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+alloy-primitives = { workspace = true }
+revm = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+hex = { workspace = true }
+thiserror = { workspace = true }
+invariant-rules = { path = "../invariant-rules" }
+invariant-fuzzer = { path = "../invariant-fuzzer" }
+
+[dev-dependencies]
