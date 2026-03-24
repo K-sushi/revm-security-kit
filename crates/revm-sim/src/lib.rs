@@ -14,6 +14,7 @@
 
 pub mod types;
 pub mod simulator;
+pub mod audit;
 
 pub use types::*;
 pub use simulator::Simulator;

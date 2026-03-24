@@ -27,7 +27,7 @@ pub struct Simulator {
     http_client: reqwest::Client,
     loaded_block: u64,
     loaded_addresses: HashSet<Address>,
-    block_env: BlockEnv,
+    pub(crate) block_env: BlockEnv,
     snapshots: HashMap<SnapshotId, CacheDB<EmptyDB>>,
     next_snapshot_id: SnapshotId,
 }
@@ -298,7 +298,7 @@ impl Simulator {
 
     // -- Private helpers --
 
-    fn build_tx_env(&self, tx: &SimTxInput) -> TxEnv {
+    pub(crate) fn build_tx_env(&self, tx: &SimTxInput) -> TxEnv {
         TxEnv {
             caller: RevmAddress::from_slice(tx.caller.as_slice()),
             transact_to: TransactTo::Call(
@@ -315,7 +315,7 @@ impl Simulator {
         }
     }
 
-    fn tx_error_result<E: std::fmt::Debug>(err: E) -> SimResult {
+    pub(crate) fn tx_error_result<E: std::fmt::Debug>(err: E) -> SimResult {
         SimResult {
             success: false,
             gas_used: 0,
@@ -325,7 +325,7 @@ impl Simulator {
         }
     }
 
-    fn convert_result(
+    pub(crate) fn convert_result(
         &self, result: ExecutionResult,
     ) -> Result<SimResult> {
         match result {
