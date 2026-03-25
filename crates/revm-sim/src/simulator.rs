@@ -22,11 +22,11 @@ use crate::types::*;
 /// Addresses are preloaded before simulation to ensure contract
 /// code and storage are available.
 pub struct Simulator {
-    config: SimConfig,
-    db: CacheDB<EmptyDB>,
-    http_client: reqwest::Client,
-    loaded_block: u64,
-    loaded_addresses: HashSet<Address>,
+    pub(crate) config: SimConfig,
+    pub(crate) db: CacheDB<EmptyDB>,
+    pub(crate) http_client: reqwest::Client,
+    pub(crate) loaded_block: u64,
+    pub(crate) loaded_addresses: HashSet<Address>,
     pub(crate) block_env: BlockEnv,
     snapshots: HashMap<SnapshotId, CacheDB<EmptyDB>>,
     next_snapshot_id: SnapshotId,
@@ -270,32 +270,6 @@ impl Simulator {
         Ok(results)
     }
 
-    /// Classify revert reason for analysis.
-    pub fn classify_revert(
-        result: &ExecutionResult, gas_limit: u64,
-    ) -> RevertLabel {
-        use revm::primitives::HaltReason;
-        match result {
-            ExecutionResult::Success { .. } => RevertLabel::Unknown,
-            ExecutionResult::Revert { gas_used, .. } => {
-                if *gas_used >= gas_limit {
-                    RevertLabel::OutOfGas
-                } else {
-                    RevertLabel::RevertedNoReason
-                }
-            }
-            ExecutionResult::Halt { reason, .. } => match reason {
-                HaltReason::OutOfGas(_) => RevertLabel::OutOfGas,
-                HaltReason::InvalidFEOpcode
-                | HaltReason::OpcodeNotFound => RevertLabel::InvalidOpcode,
-                HaltReason::OutOfFunds => {
-                    RevertLabel::InsufficientLiquidity
-                }
-                _ => RevertLabel::Unknown,
-            },
-        }
-    }
-
     // -- Private helpers --
 
     pub(crate) fn build_tx_env(&self, tx: &SimTxInput) -> TxEnv {
@@ -373,31 +347,6 @@ impl Simulator {
             }),
         }
     }
-
-    fn decode_revert(output: &RevmBytes) -> String {
-        if output.len() >= 68 && output[0..4] == [0x08, 0xc3, 0x79, 0xa0]
-        {
-            let len_start = 36;
-            if len_start + 32 <= output.len() {
-                let len_bytes: [u8; 8] = [
-                    output[len_start + 24], output[len_start + 25],
-                    output[len_start + 26], output[len_start + 27],
-                    output[len_start + 28], output[len_start + 29],
-                    output[len_start + 30], output[len_start + 31],
-                ];
-                let length = u64::from_be_bytes(len_bytes) as usize;
-                let str_start = len_start + 32;
-                if str_start + length <= output.len() {
-                    if let Ok(reason) = String::from_utf8(
-                        output[str_start..str_start + length].to_vec(),
-                    ) {
-                        return reason;
-                    }
-                }
-            }
-        }
-        format!("0x{}", hex::encode(output))
-    }
 }
 
 impl Clone for Simulator {
@@ -412,53 +361,5 @@ impl Clone for Simulator {
             snapshots: HashMap::new(),
             next_snapshot_id: 0,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_simulator_new() {
-        let config = SimConfig::ethereum("http://localhost:8545");
-        let sim = Simulator::new(config);
-        assert_eq!(sim.chain_id(), 1);
-    }
-
-    #[test]
-    fn test_snapshot_restore() {
-        let config = SimConfig::new("http://localhost:8545", 1);
-        let mut sim = Simulator::new(config);
-        let addr = Address::ZERO;
-        let key = U256::from(1u64);
-
-        sim.set_storage(addr, key, U256::from(42u64));
-        let snap = sim.snapshot();
-
-        sim.set_storage(addr, key, U256::from(99u64));
-        assert_eq!(sim.get_storage(&addr, key), Some(U256::from(99u64)));
-
-        sim.restore(snap).unwrap();
-        assert_eq!(sim.get_storage(&addr, key), Some(U256::from(42u64)));
-    }
-
-    #[test]
-    fn test_prefund() {
-        let config = SimConfig::new("http://localhost:8545", 1);
-        let mut sim = Simulator::new(config);
-        let addr = Address::ZERO;
-        sim.prefund(&addr, U256::from(1_000_000u64));
-        assert!(sim.loaded_addresses.contains(&addr));
-    }
-
-    #[test]
-    fn test_config_builder() {
-        let config = SimConfig::new("http://rpc.example.com", 42)
-            .with_refresh_interval(50)
-            .with_rpc_timeout(10);
-        assert_eq!(config.chain_id, 42);
-        assert_eq!(config.refresh_interval_blocks, 50);
-        assert_eq!(config.rpc_timeout_secs, 10);
     }
 }
